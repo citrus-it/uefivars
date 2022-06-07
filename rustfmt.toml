@@ -1,0 +1,4 @@
+max_width = 80
+use_small_heuristics = "max"
+#nightly struct_field_align_threshold = 20
+edition = "2021"
