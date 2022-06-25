@@ -1,0 +1,137 @@
+.\"
+.\" This file and its contents are supplied under the terms of the
+.\" Common Development and Distribution License ("CDDL"), version 1.0.
+.\" You may only use this file in accordance with the terms of version
+.\" 1.0 of the CDDL.
+.\"
+.\" A full copy of the text of the CDDL should have accompanied this
+.\" source.  A copy of the CDDL is also available via the Internet at
+.\" http://www.illumos.org/license/CDDL.
+.\"
+.\" Copyright 2022 OmniOS Community Edition (OmniOSce) Association.
+.\"
+.Dd June 25, 2022
+.Dt UEFIVARS 1
+.Os
+.Sh NAME
+.Nm uefivars
+.Nd inspect and manipulate UEFI variable store firmware volumes
+.Sh SYNOPSIS
+.Nm
+.Op Fl adDhlvV
+.Op Fl b Ar bootentry
+.Op Fl f Ar substring
+.Op Fl o Ar file
+.Ar firmware_volume
+.Sh DESCRIPTION
+.Nm
+is a utility for inspecting and manipulating  UEFI variable store firmware
+volume files such as those used by
+.Xr bhyve 8 .
+.Sh OPTIONS
+.\"
+.ds requires-output \
+.No This option has no effect unless the Fl o No option is also provided to \
+provide a filename to which the modified content should be written .
+.\"
+The following options are supported:
+.Bl -tag -width Ar
+.It Fl a | \&-all
+Show all variables found in the store, including those which have been deleted
+or are in the process of transitioning to the deleted state.
+.It Fl b Ar bootentry | Fl \&-bootnext Ar bootentry
+Write a
+.Sy BootNext
+variable to the store to set the boot entry which will be used for the next
+boot.
+.Ar bootentry
+is a numeric argument corresponding to one of the boot entries shown with the
+.Fl -l | \&-list
+option.
+.Pp
+\*[requires-output]
+.It Fl d | Fl \&-debug
+Produce debugging output including a full dump of the parsed variable store.
+.It Fl D | Fl \&-defrag
+Degragment the variable store by removing all deleted variables and promoting
+any non-conflicting variables which are in the process of being added.
+.Pp
+\*[requires-output]
+.It Fl f Ar substring | Fl \&-fiter Ar substring
+Show only variables whose name contains
+.Ar substring .
+.It Fl h | Fl \&-help
+Show brief help.
+.It Fl l | Fl \&-list
+Show a summary of the available boot options and which are active.
+.It Fl o Ar file | Fl \&-o Ar file
+Set the output file to which the new firmware volume will be written.
+.It Fl v | Fl \&-verbose
+Increase verbosity.
+In particular, with
+.Fl l
+this shows the raw content of each displayed variable.
+.It Fl V | Fl \&-version
+Display program version.
+.El
+.Sh OPERANDS
+The following operands are supported:
+.Bl -tag -width Ar
+.It Ar firmware_volume
+The firmware volume file to be read.
+For a
+.Xr bhyve 7
+branded zone, the volume can be found at
+.D1 Pa <zoneroot>/etc/uefivars .
+.El
+.Sh EXIT STATUS
+.Bl -tag -width Er
+.It Er 0
+The operation completed successfully.
+.It Er 1
+An error occured.
+.El
+.Sh EXAMPLES
+.Sy Example 1 No - list boot options for an image
+.Bd -literal -offset 2n
+# uefivars -l /zones/freebsd/root/etc/uefivars
+BOOT OPTIONS
+------------
+Bootorder: [0, 1, 2, 3, 4, 5]
+C H [0 ] UiApp - [App 462caa21-7614-4503-836e-8ab6f4662331]
+    [1 ] UEFI BHYVE SATA DVD ROM BHYVE-BD80-94E5-3155 - [PCI 29.0]
+    [2 ] UEFI bhyve-NVMe NVME-4-0 - [PCI 4.0]
+    [3 ] UEFI PXEv4 (MAC:0208205509BB) - [PCI 6.0]
+    [4 ] UEFI HTTPv4 (MAC:0208205509BB) - [PCI 6.0] [HTTP]
+    [5 ] EFI Internal Shell - [App 7c04a583-9e3e-4f1c-ad65-e05268d0b4d1]
+C    - Current (first in boot order)
+ N   - Next Boot
+  H  - Hidden
+.Ed
+.Pp
+.Sy Example 2 No - Set next boot to the EFI internal shell
+.Bd -literal -offset 2n
+# uefivars -b 5 /zones/freebsd/root/etc/uefivars
+.Ed
+.Pp
+.Sy Example 3 No - show the contents of the Sy Lang No variable
+.Bd -literal -offset 2n
+# uefivars /zones/freebsd/root/etc/uefivars -v -f Lang
+            GLOBAL_VARIABLE                   NV+RT+BS  Lang
+GUID:  8be4df61-93ca-11d2-aa0d-00e098032b8c
+State: 3f  Attrs: 7
+00000000: 65 6e 67 00 | eng.
+.Ed
+.Sh INTERFACE STABILITY
+The command line interface of
+.Nm
+is
+.Sy Evolving .
+The output of
+.Nm
+is
+.Sy Not-An-Interface
+and may change at any time.
+.Sh SEE ALSO
+.Xr bhyve 7 ,
+.Xr bhyve 8
