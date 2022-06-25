@@ -19,7 +19,7 @@ jobs:
       run: |
          echo "GITHUB_REPOSITORY = $GITHUB_REPOSITORY"
          echo "GITHUB_REF = $GITHUB_REF"
-         echo "::set-output name=v::${GITHUB_REPOSITORY##*/}-${GITHUB_REF##*/}"
+         echo "::set-output name=v::${GITHUB_REPOSITORY##*/}-${GITHUB_REF##*/v}"
          echo "::set-output name=b::${GITHUB_REF##*/}"
          sed -i "/^version =/s/\".*\"/\"${GITHUB_REF##*/v}\"/" Cargo.toml
 
