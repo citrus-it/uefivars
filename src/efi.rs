@@ -560,9 +560,11 @@ impl Iterator for BootEntryIter<'_> {
             elo.title = String::from_utf16_lossy(elo.rawtitle.as_slice());
 
             for p in &elo.pathlist {
+                // 10.3.2.1 PCI Device Path
                 if p.device_type == 1 && p.sub_type == 1 && p.data.len() == 2 {
                     elo.btype = BootEntryType::PCI(p.data[0], p.data[1]);
                 }
+                // 10.3.5.6 PIWG Firmware File
                 if p.device_type == 4 && p.sub_type == 6 &&
                     p.data.len() == 16 {
 
@@ -570,9 +572,11 @@ impl Iterator for BootEntryIter<'_> {
                     let guid: EfiGuid = pc.read_le().unwrap();
                     elo.btype = BootEntryType::App(guid);
                 }
+                // 10.3.4.23 Uniform Resource Identifiers (URI) Device Path
                 if p.device_type == 3 && p.sub_type == 24 {
                     elo.uri = true;
                 }
+                // 10.3.5.4 File Path Media Device Path
                 if p.device_type == 4 && p.sub_type == 4 {
                     let mut pc = Cursor::new(&p.data);
                     let rawpath: RawUTF16 = pc.read_le().unwrap();
