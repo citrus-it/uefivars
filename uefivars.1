@@ -29,11 +29,6 @@ is a utility for inspecting and manipulating  UEFI variable store firmware
 volume files such as those used by
 .Xr bhyve 8 .
 .Sh OPTIONS
-.\"
-.ds requires-output \
-.No This option has no effect unless the Fl o No option is also provided to \
-provide a filename to which the modified content should be written .
-.\"
 The following options are supported:
 .Bl -tag -width Ar
 .It Fl a | \&-all
@@ -48,15 +43,11 @@ boot.
 is a numeric argument corresponding to one of the boot entries shown with the
 .Fl -l | \&-list
 option.
-.Pp
-\*[requires-output]
 .It Fl d | Fl \&-debug
 Produce debugging output including a full dump of the parsed variable store.
 .It Fl D | Fl \&-defrag
 Degragment the variable store by removing all deleted variables and promoting
 any non-conflicting variables which are in the process of being added.
-.Pp
-\*[requires-output]
 .It Fl f Ar substring | Fl \&-fiter Ar substring
 Show only variables whose name contains
 .Ar substring .
@@ -66,6 +57,7 @@ Show brief help.
 Show a summary of the available boot options and which are active.
 .It Fl o Ar file | Fl \&-o Ar file
 Set the output file to which the new firmware volume will be written.
+Without this option, the input file will be updated in-place.
 .It Fl v | Fl \&-verbose
 Increase verbosity.
 In particular, with
