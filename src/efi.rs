@@ -479,6 +479,7 @@ pub enum BootEntryType {
     Unknown,
     PCI(u8, u8),
     App(EfiGuid),
+    Path(String),
 }
 
 impl Default for BootEntryType {
@@ -491,7 +492,10 @@ impl fmt::Debug for BootEntryType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", match self {
             BootEntryType::PCI(f, d) => format!("PCI {}.{}", d, f).to_string(),
-            BootEntryType::App(guid) => format!("App {}", guid).to_string(),
+            BootEntryType::App(ref guid) =>
+                format!("App {}", guid).to_string(),
+            BootEntryType::Path(ref path) =>
+                format!("Path {}", path).to_string(),
             BootEntryType::Unknown   => "unknown".to_string(),
         })
     }
@@ -508,6 +512,12 @@ pub struct DevicePath {
     pub length:         u16,
     #[br(count = length - 4)]
     pub data:           Vec<u8>,
+}
+
+#[binread]
+pub struct RawUTF16 {
+    #[br(parse_with = until_exclusive(|v| *v == 0))]
+    pub raw:        Vec<u16>,
 }
 
 #[allow(dead_code)]
@@ -562,6 +572,12 @@ impl Iterator for BootEntryIter<'_> {
                 }
                 if p.device_type == 3 && p.sub_type == 24 {
                     elo.uri = true;
+                }
+                if p.device_type == 4 && p.sub_type == 4 {
+                    let mut pc = Cursor::new(&p.data);
+                    let rawpath: RawUTF16 = pc.read_le().unwrap();
+                    let path = String::from_utf16_lossy(rawpath.raw.as_slice());
+                    elo.btype = BootEntryType::Path(path);
                 }
             }
 
