@@ -46,7 +46,11 @@ struct Args {
 
     /// Select the boot entry for the next boot
     #[clap(short, long, value_name = "id")]
-    bootnext: Option<u8>,
+    bootnext: Option<u16>,
+
+    /// Define a new boot order
+    #[clap(short = 'O', long, value_name = "id[,id]...")]
+    bootorder: Option<String>,
 
     /// List available boot options
     #[clap(short, long)]
@@ -104,19 +108,20 @@ fn main() {
         changed = true;
     }
 
+    if let Some(ref bootorder) = args.bootorder {
+        let data: Vec<u16> = bootorder
+            .split(',')
+            .map(|s| s.parse().expect("Error parsing boot order"))
+            .collect();
+
+        fv.set_u16_var("BootOrder", &data);
+        changed = true;
+    }
+
     if let Some(bootid) = args.bootnext {
-        fv.remove_var("BootNext", &efi::EFI_GLOBAL_VARIABLE_GUID.to_string());
-        let bootnext = efi::AuthVariable {
-            name: "BootNext".to_string(),
-            namelen: 18,
-            datalen: 2,
-            data: vec![bootid, 0],
-            ..Default::default()
-        };
-        if args.debug {
-            println!("Adding variable: {:#x?}", bootnext);
-        }
-        fv.vars.push(bootnext);
+        let data: Vec<u16> = vec![bootid];
+
+        fv.set_u16_var("BootNext", &data);
         changed = true;
     }
 

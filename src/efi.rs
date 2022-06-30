@@ -309,6 +309,24 @@ impl Volume {
         None
     }
 
+    pub fn set_u16_var(&mut self, name: &str, data: &Vec<u16>) {
+        self.remove_var(name, &EFI_GLOBAL_VARIABLE_GUID.to_string());
+
+        let mut ndata: Vec<u8> = Vec::with_capacity(data.len() * 2);
+        for v in data {
+            ndata.extend(v.to_le_bytes());
+        }
+
+        let var = AuthVariable {
+            name: name.to_string(),
+            namelen: (name.len() as u32 + 1) * 2,
+            datalen: ndata.len() as u32,
+            data: ndata,
+            ..Default::default()
+        };
+        self.vars.push(var);
+    }
+
     pub fn boot_order(&self) -> Option<BootOrder> {
         if let Some(cv) =
             self.find_var("BootOrder", &EFI_GLOBAL_VARIABLE_GUID.to_string())
