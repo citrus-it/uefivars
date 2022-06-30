@@ -655,9 +655,11 @@ mod utf16 {
     use binrw::WriteOptions;
     use std::char::{decode_utf16, REPLACEMENT_CHARACTER};
 
-    pub fn read<R> (reader: &mut R, _ro: &ReadOptions, args: (u32,))
-        -> BinResult<String>
-        where R: Read + Seek
+    pub fn read<R>(
+        reader: &mut R, _ro: &ReadOptions, args: (u32,),
+    ) -> BinResult<String>
+    where
+        R: Read + Seek,
     {
         let mut i = args.0 as usize;
         let mut v: Vec<u16> = Vec::with_capacity(i / 2);
@@ -676,9 +678,11 @@ mod utf16 {
         Ok(s)
     }
 
-    pub fn write<W> (data: &String, writer: &mut W, wo: &WriteOptions, _: ())
-        -> binrw::BinResult<()>
-        where W: binrw::io::Write + binrw::io::Seek
+    pub fn write<W>(
+        data: &String, writer: &mut W, wo: &WriteOptions, _: (),
+    ) -> binrw::BinResult<()>
+    where
+        W: binrw::io::Write + binrw::io::Seek,
     {
         let mut v: Vec<u16> = data.encode_utf16().collect();
         v.push(0);
@@ -937,3 +941,4 @@ lazy_static! {
         ].into_iter().collect()
     };
 }
+

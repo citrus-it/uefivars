@@ -1,4 +1,7 @@
+edition = "2021"
 max_width = 80
 use_small_heuristics = "max"
+fn_args_layout = "Compressed"
+#nightly hex_literal_case = "Lower"
+#nightly wrap_comments = true
 #nightly struct_field_align_threshold = 20
-edition = "2021"
