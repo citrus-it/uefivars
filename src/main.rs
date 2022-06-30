@@ -37,7 +37,7 @@ struct Args {
     debug: bool,
 
     /// De-fragment the file
-    #[clap(short='D', long)]
+    #[clap(short = 'D', long)]
     defrag: bool,
 
     /// JSON output
@@ -57,13 +57,11 @@ struct Args {
     filter: Option<String>,
 
     /// A UEFI variable firmware volume file
-    #[clap(required(true), value_name = "input",
-        parse(from_os_str))]
+    #[clap(required(true), value_name = "input", parse(from_os_str))]
     file: Option<PathBuf>,
 }
 
 fn main() {
-
     let args = Args::parse();
 
     let path = args.file.as_deref().unwrap();
@@ -79,7 +77,7 @@ fn main() {
             Err(e) => {
                 eprintln!("Could not open {}: {}", pd, e);
                 std::process::exit(1)
-            },
+            }
             Ok(file) => file,
         };
 
@@ -87,7 +85,7 @@ fn main() {
             Err(e) => {
                 eprintln!("Could not parse {}: {}", pd, e);
                 std::process::exit(1)
-            },
+            }
             Ok(v) => v,
         };
     }
@@ -128,13 +126,17 @@ fn main() {
             .write(true)
             .create(true)
             .truncate(true)
-            .open(&opath) {
-                Err(e) => {
-                    eprintln!("Could not open output file {}: {}",
-                        opath.display(), e);
-                    std::process::exit(1)
-                },
-                Ok(file) => file,
+            .open(&opath)
+        {
+            Err(e) => {
+                eprintln!(
+                    "Could not open output file {}: {}",
+                    opath.display(),
+                    e
+                );
+                std::process::exit(1)
+            }
+            Ok(file) => file,
         };
 
         fv.write_to(&mut ofile).expect("Could not write to output file");
@@ -154,7 +156,7 @@ struct BootOptions {
     entries: Vec<efi::BootEntry>,
 }
 
-fn list_boot_options(args: &Args, fv :&efi::Volume) {
+fn list_boot_options(args: &Args, fv: &efi::Volume) {
     let opts = BootOptions {
         order: fv.boot_order(),
         next: fv.boot_next(),
@@ -178,23 +180,32 @@ fn list_boot_options(args: &Args, fv :&efi::Volume) {
     }
 
     if let Some(n) = opts.next {
-            next = n;
+        next = n;
     }
 
     for be in opts.entries {
         let mut tag = String::new();
         tag.push(if be.slot == current { 'C' } else { ' ' });
         tag.push(if be.slot == next { 'N' } else { ' ' });
-        tag.push(if be.attributes & efi::LOAD_OPTION_HIDDEN != 0
-            { 'H' } else { ' ' });
+        tag.push(if be.attributes & efi::LOAD_OPTION_HIDDEN != 0 {
+            'H'
+        } else {
+            ' '
+        });
 
         let btype = match be.btype {
             efi::BootEntryType::Unknown => "".to_string(),
             ref x => format!(" - [{:?}]", x).to_string(),
         };
 
-        println!("{} [{:<2}] {}{}{}", tag, be.slot, be.title, btype,
-            if be.uri { " [HTTP]" } else { "" });
+        println!(
+            "{} [{:<2}] {}{}{}",
+            tag,
+            be.slot,
+            be.title,
+            btype,
+            if be.uri { " [HTTP]" } else { "" }
+        );
 
         if args.verbose {
             //println!("{:#x?}", be);
@@ -203,7 +214,8 @@ fn list_boot_options(args: &Args, fv :&efi::Volume) {
                     println!(
                         "    File path {:2x} Type: {:#x}/{:#x} \
                              Length: {:#x}",
-                        i, p.device_type, p.sub_type, p.length);
+                        i, p.device_type, p.sub_type, p.length
+                    );
                     print!("{}\n", HEXDUMPER.hexdump(&p.data));
                 }
             }
@@ -220,7 +232,6 @@ fn list_boot_options(args: &Args, fv :&efi::Volume) {
 }
 
 fn display_variables(args: &Args, fv: &efi::Volume) {
-
     let viter = (&fv.vars).into_iter().filter(|v| {
         if !args.all && v.state != efi::VAR_ADDED {
             false
@@ -232,7 +243,7 @@ fn display_variables(args: &Args, fv: &efi::Volume) {
     });
 
     if args.json {
-        let data: Vec<&efi::AuthVariable>  = viter.collect();
+        let data: Vec<&efi::AuthVariable> = viter.collect();
         println!("{}", serde_json::to_string(&data).unwrap());
     } else {
         for v in viter {

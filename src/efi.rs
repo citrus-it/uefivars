@@ -1,15 +1,15 @@
-use std::fmt;
 use std::cmp::min;
 use std::collections::{HashMap, HashSet};
-use std::str::FromStr;
+use std::fmt;
 use std::num::ParseIntError;
+use std::str::FromStr;
 
 use serde::Serialize;
 use serde::Serializer;
 
-use binrw::{binread, binrw, BinReaderExt};
-use binrw::helpers::{until, until_exclusive, until_eof};
+use binrw::helpers::{until, until_eof, until_exclusive};
 use binrw::io::{Cursor, SeekFrom};
+use binrw::{binread, binrw, BinReaderExt};
 
 // The uefi-edk2 nvram firmware volume is divided into sections as follows:
 //
@@ -45,7 +45,7 @@ const EFI_FAULT_TOLERANT_WORKING_BLOCK_HEADER: EfiGuid = EfiGuid {
     data1: 0x9e58292b,
     data2: 0x7c68,
     data3: 0x497d,
-    data4: [ 0xa0, 0xce, 0x65,  0x0, 0xfd, 0x9f, 0x1b, 0x95 ],
+    data4: [0xa0, 0xce, 0x65, 0x0, 0xfd, 0x9f, 0x1b, 0x95],
 };
 
 pub const EFI_GLOBAL_VARIABLE_GUID: EfiGuid = EfiGuid {
@@ -204,8 +204,9 @@ impl fmt::Display for AuthVariable {
             attrlist.push("HR");
         }
 
-        if self.attributes &
-            EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS != 0 {
+        if self.attributes & EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
+            != 0
+        {
             attrlist.push("AT");
         }
 
@@ -279,9 +280,11 @@ impl Volume {
         }
 
         self.vars.retain(|v| {
-            v.state == VAR_ADDED || (
-                v.state == (VAR_ADDED & VAR_IN_DELETED_TRANSITION) &&
-                !known.contains(&format!("{}/{}", v.guid, v.name).to_string()))
+            v.state == VAR_ADDED
+                || (v.state == (VAR_ADDED & VAR_IN_DELETED_TRANSITION)
+                    && !known.contains(
+                        &format!("{}/{}", v.guid, v.name).to_string(),
+                    ))
         });
 
         // Now promote any remaining ADDED/IN_DELETED_TRANSITION entries
@@ -291,15 +294,15 @@ impl Volume {
     }
 
     pub fn remove_var(&mut self, name: &str, guid: &str) {
-        self.vars.retain(|v| {
-            v.name != name || v.guid.to_string() != guid
-        });
+        self.vars.retain(|v| v.name != name || v.guid.to_string() != guid);
     }
 
     pub fn find_var(&self, name: &str, guid: &str) -> Option<&AuthVariable> {
         for v in &self.vars {
-            if v.state == VAR_ADDED && v.name == name &&
-                v.guid.to_string() == guid {
+            if v.state == VAR_ADDED
+                && v.name == name
+                && v.guid.to_string() == guid
+            {
                 return Some(v);
             }
         }
@@ -307,25 +310,25 @@ impl Volume {
     }
 
     pub fn boot_order(&self) -> Option<BootOrder> {
-        if let Some(cv) = self.find_var("BootOrder",
-            &EFI_GLOBAL_VARIABLE_GUID.to_string()) {
+        if let Some(cv) =
+            self.find_var("BootOrder", &EFI_GLOBAL_VARIABLE_GUID.to_string())
+        {
             if cv.datalen > 1 {
                 let mut c = Cursor::new(&cv.data);
                 let bo: BootOrder = c.read_le().unwrap();
-                return Some(bo)
+                return Some(bo);
             }
         }
         None
     }
 
     pub fn boot_next(&self) -> Option<u16> {
-        if let Some(nv) = self.find_var("BootNext",
-            &EFI_GLOBAL_VARIABLE_GUID.to_string()) {
-                if nv.datalen > 1 {
-                    return Some(
-                        (nv.data[0] as u16) | ((nv.data[1] as u16) << 8)
-                    );
-                }
+        if let Some(nv) =
+            self.find_var("BootNext", &EFI_GLOBAL_VARIABLE_GUID.to_string())
+        {
+            if nv.datalen > 1 {
+                return Some((nv.data[0] as u16) | ((nv.data[1] as u16) << 8));
+            }
         }
         None
     }
@@ -390,7 +393,8 @@ mod tests {
 
     #[test]
     fn guid_to_str() {
-        assert_eq!(EFI_GLOBAL_VARIABLE_GUID.to_string(),
+        assert_eq!(
+            EFI_GLOBAL_VARIABLE_GUID.to_string(),
             "8be4df61-93ca-11d2-aa0d-00e098032b8c"
         );
     }
@@ -519,14 +523,17 @@ impl Default for BootEntryType {
 
 impl fmt::Debug for BootEntryType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", match self {
-            BootEntryType::PCI(f, d) => format!("PCI {}.{}", d, f).to_string(),
-            BootEntryType::App(ref guid) =>
-                format!("App {}", guid).to_string(),
-            BootEntryType::Path(ref path) =>
-                format!("Path {}", path).to_string(),
-            BootEntryType::Unknown   => "unknown".to_string(),
-        })
+        write!(f, "{}",
+            match self {
+                BootEntryType::PCI(f, d) =>
+                    format!("PCI {}.{}", d, f).to_string(),
+                BootEntryType::App(ref guid) =>
+                    format!("App {}", guid).to_string(),
+                BootEntryType::Path(ref path) =>
+                    format!("Path {}", path).to_string(),
+                BootEntryType::Unknown => "unknown".to_string(),
+            }
+        )
     }
 }
 
@@ -578,9 +585,9 @@ impl Iterator for BootEntryIter<'_> {
         };
         self.slot = Some(next);
         let var = format!("Boot{:04X}", next);
-        if let Some(entry) = self.volume.find_var(&var,
-            &EFI_GLOBAL_VARIABLE_GUID.to_string()) {
-
+        if let Some(entry) =
+            self.volume.find_var(&var, &EFI_GLOBAL_VARIABLE_GUID.to_string())
+        {
             let mut c = Cursor::new(&entry.data);
             let mut elo: Self::Item = c.read_le().unwrap();
 
