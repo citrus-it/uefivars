@@ -4,6 +4,9 @@ use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use std::num::ParseIntError;
 
+use serde::Serialize;
+use serde::Serializer;
+
 use binrw::{binread, binrw, BinReaderExt};
 use binrw::helpers::{until, until_exclusive, until_eof};
 use binrw::io::{Cursor, SeekFrom};
@@ -144,14 +147,18 @@ pub struct FTWBlockHeader {
 
 #[binrw]
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Serialize, Debug)]
 pub struct AuthVariable {
     pub startid:        u16,
     pub state:          u8,
+    #[serde(skip)]
     pub _rsvd1:         u8,
     pub attributes:     u32,
+    #[serde(skip)]
     pub count:          u64,
+    #[serde(skip)]
     pub timestamp:      EfiTime,
+    #[serde(skip)]
     pub pubkeyindex:    u32,
     pub namelen:        u32,
     pub datalen:        u32,
@@ -367,6 +374,15 @@ impl FromStr for EfiGuid {
     }
 }
 
+impl Serialize for EfiGuid {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -426,6 +442,15 @@ impl fmt::Display for EfiTime {
     }
 }
 
+impl Serialize for EfiTime {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
 #[binrw]
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone)]
@@ -436,6 +461,7 @@ pub struct BlockMapEntry {
 
 #[binread]
 #[allow(dead_code)]
+#[derive(Debug, Serialize)]
 pub struct BootOrder {
     #[br(restore_position)]
     pub first: u16,
@@ -447,7 +473,7 @@ pub struct BootOrder {
 // EFI_LOAD_OPTION structure.
 #[binread]
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct BootEntry {
     #[br(ignore)]
     pub slot:           u16,
@@ -457,7 +483,9 @@ pub struct BootEntry {
     pub title:          String,
 
     pub attributes:     u32,
+    #[serde(skip)]
     fplength:           u16,
+    #[serde(skip)]
     #[br(parse_with = until_exclusive(|v| *v == 0))]
     pub rawtitle:       Vec<u16>,
 
@@ -475,6 +503,7 @@ pub struct BootEntry {
     pub uri:            bool
 }
 
+#[derive(Serialize)]
 pub enum BootEntryType {
     Unknown,
     PCI(u8, u8),
@@ -504,7 +533,7 @@ impl fmt::Debug for BootEntryType {
 // Section 10.3.1 - Generic Device Path Structures
 #[binread]
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct DevicePath {
     // header
     pub device_type:    u8,

@@ -6,6 +6,10 @@ use std::path::PathBuf;
 use binrw::prelude::*;
 use clap::Parser;
 
+use serde::Serialize;
+
+extern crate serde_json;
+
 #[macro_use]
 extern crate lazy_static;
 
@@ -35,6 +39,10 @@ struct Args {
     /// De-fragment the file
     #[clap(short='D', long)]
     defrag: bool,
+
+    /// JSON output
+    #[clap(short, long)]
+    json: bool,
 
     /// Select the boot entry for the next boot
     #[clap(short, long, value_name = "id")]
@@ -139,27 +147,41 @@ fn main() {
     }
 }
 
+#[derive(Debug, Serialize)]
+struct BootOptions {
+    order: Option<efi::BootOrder>,
+    next: Option<u16>,
+    entries: Vec<efi::BootEntry>,
+}
+
 fn list_boot_options(args: &Args, fv :&efi::Volume) {
-    println!("BOOT OPTIONS");
-    println!("------------");
+    let opts = BootOptions {
+        order: fv.boot_order(),
+        next: fv.boot_next(),
+        entries: fv.boot_entries().collect(),
+    };
+
+    if args.json {
+        println!("{}", serde_json::to_string(&opts).unwrap());
+        return;
+    }
+
     let mut current: u16 = u16::MAX;
     let mut next: u16 = u16::MAX;
 
-    if let Some(bootorder) = fv.boot_order() {
+    println!("BOOT OPTIONS");
+    println!("------------");
+
+    if let Some(bootorder) = opts.order {
         current = bootorder.first;
         println!("Bootorder: {:?}", bootorder.order);
     }
 
-    if let Some(n) = fv.boot_next() {
+    if let Some(n) = opts.next {
             next = n;
     }
 
-    for be in fv.boot_entries() {
-        if let Some(ref filter) = args.filter {
-            if !be.name.contains(filter) {
-                continue;
-            }
-        }
+    for be in opts.entries {
         let mut tag = String::new();
         tag.push(if be.slot == current { 'C' } else { ' ' });
         tag.push(if be.slot == next { 'N' } else { ' ' });
@@ -198,14 +220,22 @@ fn list_boot_options(args: &Args, fv :&efi::Volume) {
 }
 
 fn display_variables(args: &Args, fv: &efi::Volume) {
-    // Display variables
-    for v in &fv.vars {
-        if args.all || v.state == efi::VAR_ADDED {
-            if let Some(ref filter) = args.filter {
-                if !v.name.contains(filter) {
-                    continue;
-                }
-            }
+
+    let viter = (&fv.vars).into_iter().filter(|v| {
+        if !args.all && v.state != efi::VAR_ADDED {
+            false
+        } else if let Some(ref filter) = args.filter {
+            v.name.contains(filter)
+        } else {
+            true
+        }
+    });
+
+    if args.json {
+        let data: Vec<&efi::AuthVariable>  = viter.collect();
+        println!("{}", serde_json::to_string(&data).unwrap());
+    } else {
+        for v in viter {
             println!("{}", v);
             if args.verbose {
                 print!("GUID:  {}  ", v.guid);
