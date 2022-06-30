@@ -312,10 +312,11 @@ impl Volume {
     pub fn set_u16_var(&mut self, name: &str, data: &Vec<u16>) {
         self.remove_var(name, &EFI_GLOBAL_VARIABLE_GUID.to_string());
 
-        let mut ndata: Vec<u8> = Vec::with_capacity(data.len() * 2);
-        for v in data {
-            ndata.extend(v.to_le_bytes());
-        }
+        let ndata = data
+            .iter()
+            .map(|&x| x.to_le_bytes())
+            .collect::<Vec<[u8; 2]>>()
+            .concat();
 
         let var = AuthVariable {
             name: name.to_string(),
