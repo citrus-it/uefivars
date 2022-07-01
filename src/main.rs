@@ -162,10 +162,18 @@ struct BootOptions {
 }
 
 fn list_boot_options(args: &Args, fv: &efi::Volume) {
+
+    let beiter = fv.boot_entries().filter(|v| {
+        match args.filter {
+            Some(ref filter) => v.name.contains(filter),
+            _ => true
+        }
+    });
+
     let opts = BootOptions {
         order: fv.boot_order(),
         next: fv.boot_next(),
-        entries: fv.boot_entries().collect(),
+        entries: beiter.collect(),
     };
 
     if args.json {
