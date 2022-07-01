@@ -283,7 +283,7 @@ impl Volume {
             v.state == VAR_ADDED
                 || (v.state == (VAR_ADDED & VAR_IN_DELETED_TRANSITION)
                     && !known.contains(
-                        &format!("{}/{}", v.guid, v.name).to_string(),
+                        &format!("{}/{}", v.guid, v.name),
                     ))
         });
 
@@ -309,7 +309,7 @@ impl Volume {
         None
     }
 
-    pub fn set_u16_var(&mut self, name: &str, data: &Vec<u16>) {
+    pub fn set_u16_var(&mut self, name: &str, data: &[u16]) {
         self.remove_var(name, &EFI_GLOBAL_VARIABLE_GUID.to_string());
 
         let ndata = data
@@ -381,9 +381,9 @@ impl FromStr for EfiGuid {
             panic!("Invalid number of parts in guid");
         }
         let mut guid = EfiGuid::default();
-        guid.data1 = u32::from_str_radix(&parts[0], 16)?;
-        guid.data2 = u16::from_str_radix(&parts[1], 16)?;
-        guid.data3 = u16::from_str_radix(&parts[2], 16)?;
+        guid.data1 = u32::from_str_radix(parts[0], 16)?;
+        guid.data2 = u16::from_str_radix(parts[1], 16)?;
+        guid.data3 = u16::from_str_radix(parts[2], 16)?;
         guid.data4[0] = u8::from_str_radix(&parts[3][..2], 16)?;
         guid.data4[1] = u8::from_str_radix(&parts[3][2..], 16)?;
         let mut i = 2;
@@ -545,11 +545,11 @@ impl fmt::Debug for BootEntryType {
         write!(f, "{}",
             match self {
                 BootEntryType::PCI(f, d) =>
-                    format!("PCI {}.{}", d, f).to_string(),
+                    format!("PCI {}.{}", d, f),
                 BootEntryType::App(ref guid) =>
-                    format!("App {}", guid).to_string(),
+                    format!("App {}", guid),
                 BootEntryType::Path(ref path) =>
-                    format!("Path {}", path).to_string(),
+                    format!("Path {}", path),
                 BootEntryType::Unknown => "unknown".to_string(),
             }
         )
@@ -596,11 +596,10 @@ impl Iterator for BootEntryIter<'_> {
     type Item = BootEntry;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let next: u16;
-        match self.slot {
-            None            => next = 0,
+        let next: u16 = match self.slot {
+            None            => 0,
             Some(u16::MAX)  => return None,
-            Some(x)         => next = x + 1,
+            Some(x)         => x + 1,
         };
         self.slot = Some(next);
         let var = format!("Boot{:04X}", next);

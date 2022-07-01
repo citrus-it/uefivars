@@ -13,7 +13,7 @@ extern crate serde_json;
 #[macro_use]
 extern crate lazy_static;
 
-use rhexdump;
+
 
 mod efi;
 
@@ -69,7 +69,7 @@ fn main() {
     let args = Args::parse();
 
     let path = args.file.as_deref().unwrap();
-    let opath = args.output.as_deref().unwrap_or(path.clone());
+    let opath = args.output.as_deref().unwrap_or(path);
 
     let pd = path.display();
     let mut changed = false;
@@ -98,7 +98,7 @@ fn main() {
         println!("{:#x?}", fv);
     }
 
-    if fv.vars.len() == 0 {
+    if fv.vars.is_empty() {
         println!("{} is an empty variables file", pd);
         std::process::exit(0)
     }
@@ -214,21 +214,21 @@ fn list_boot_options(args: &Args, fv: &efi::Volume) {
 
         if args.verbose {
             //println!("{:#x?}", be);
-            if be.pathlist.len() > 0 {
+            if !be.pathlist.is_empty() {
                 for (i, p) in be.pathlist.into_iter().enumerate() {
                     println!(
                         "    File path {:2x} Type: {:#x}/{:#x} \
                              Length: {:#x}",
                         i, p.device_type, p.sub_type, p.length
                     );
-                    print!("{}\n", HEXDUMPER.hexdump(&p.data));
+                    println!("{}", HEXDUMPER.hexdump(&p.data));
                 }
             }
-            if be.optionaldata.len() > 0 {
+            if !be.optionaldata.is_empty() {
                 println!("    Optional Data:");
-                print!("{}\n", HEXDUMPER.hexdump(&be.optionaldata));
+                println!("{}", HEXDUMPER.hexdump(&be.optionaldata));
             }
-            println!("");
+            println!();
         }
     }
     println!("C    - Current (first in boot order)");
@@ -237,7 +237,7 @@ fn list_boot_options(args: &Args, fv: &efi::Volume) {
 }
 
 fn display_variables(args: &Args, fv: &efi::Volume) {
-    let viter = (&fv.vars).into_iter().filter(|v| {
+    let viter = (&fv.vars).iter().filter(|v| {
         if !args.all && v.state != efi::VAR_ADDED {
             false
         } else if let Some(ref filter) = args.filter {
