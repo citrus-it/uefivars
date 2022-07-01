@@ -10,7 +10,7 @@
 .\"
 .\" Copyright 2022 OmniOS Community Edition (OmniOSce) Association.
 .\"
-.Dd June 25, 2022
+.Dd July 1, 2022
 .Dt UEFIVARS 1
 .Os
 .Sh NAME
@@ -18,8 +18,9 @@
 .Nd inspect and manipulate UEFI variable store firmware volumes
 .Sh SYNOPSIS
 .Nm
-.Op Fl adDhlvV
+.Op Fl adDhjlvV
 .Op Fl b Ar bootentry
+.Op Fl O Ar bootentry Ns Oo \&,bootentry Oc Ns \&...
 .Op Fl f Ar substring
 .Op Fl o Ar file
 .Ar firmware_volume
@@ -53,11 +54,20 @@ Show only variables whose name contains
 .Ar substring .
 .It Fl h | Fl \&-help
 Show brief help.
+.It Fl j | Fl \&-json
+Produce JSON output.
 .It Fl l | Fl \&-list
 Show a summary of the available boot options and which are active.
 .It Fl o Ar file | Fl \&-o Ar file
 Set the output file to which the new firmware volume will be written.
 Without this option, the input file will be updated in-place.
+.It Xo
+.Fl O Ar bootentry Ns Oo \&,bootentry Oc Ns \&... |
+.Fl \&-bootorder Ar bootentry Ns Oo \&,bootentry Oc Ns \&...
+.Xc
+Write a
+.Sy BootOrder
+variable to the store to set the boot order.
 .It Fl v | Fl \&-verbose
 Increase verbosity.
 In particular, with
