@@ -18,7 +18,7 @@
 .Nd inspect and manipulate UEFI variable store firmware volumes
 .Sh SYNOPSIS
 .Nm
-.Op Fl adDhjlvV
+.Op Fl adDhHjlvV
 .Op Fl b Ar bootentry
 .Op Fl O Ar bootentry Ns Oo \&,bootentry Oc Ns \&...
 .Op Fl f Ar substring
@@ -54,6 +54,9 @@ Show only variables whose name contains
 .Ar substring .
 .It Fl h | Fl \&-help
 Show brief help.
+.It Fl H | Fl \&-scripted
+Scripted mode.
+Do not display headers.
 .It Fl j | Fl \&-json
 Produce JSON output.
 .It Fl l | Fl \&-list

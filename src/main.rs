@@ -44,6 +44,10 @@ struct Args {
     #[clap(short, long)]
     json: bool,
 
+    /// Scripted mode, skip headers
+    #[clap(short = 'H', long)]
+    scripted: bool,
+
     /// Select the boot entry for the next boot
     #[clap(short, long, value_name = "id")]
     bootnext: Option<u16>,
@@ -184,12 +188,16 @@ fn list_boot_options(args: &Args, fv: &efi::Volume) {
     let mut current: u16 = u16::MAX;
     let mut next: u16 = u16::MAX;
 
-    println!("BOOT OPTIONS");
-    println!("------------");
+    if !args.scripted {
+        println!("BOOT OPTIONS");
+        println!("------------");
+    }
 
     if let Some(bootorder) = opts.order {
         current = bootorder.first;
-        println!("Bootorder: {:?}", bootorder.order);
+        if !args.scripted {
+            println!("Bootorder: {:?}", bootorder.order);
+        }
     }
 
     if let Some(n) = opts.next {
@@ -239,9 +247,11 @@ fn list_boot_options(args: &Args, fv: &efi::Volume) {
             println!();
         }
     }
-    println!("C    - Current (first in boot order)");
-    println!(" N   - Next Boot");
-    println!("  H  - Hidden");
+    if !args.scripted {
+        println!("C    - Current (first in boot order)");
+        println!(" N   - Next Boot");
+        println!("  H  - Hidden");
+    }
 }
 
 fn display_variables(args: &Args, fv: &efi::Volume) {
