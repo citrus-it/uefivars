@@ -102,7 +102,7 @@ fn main() {
         println!("{:#x?}", fv);
     }
 
-    if fv.vars.is_empty() {
+    if fv.vars.is_empty() && !args.json {
         println!("{} is an empty variables file", pd);
         std::process::exit(0)
     }
