@@ -56,6 +56,10 @@ struct Args {
     #[clap(short = 'O', long, value_name = "id[,id]...")]
     bootorder: Option<String>,
 
+    /// Remove a variable
+    #[clap(short, long, value_name = "var")]
+    remove: Option<String>,
+
     /// List available boot options
     #[clap(short, long)]
     list: bool,
@@ -126,6 +130,11 @@ fn main() {
         let data: Vec<u16> = vec![bootid];
 
         fv.set_u16_var("BootNext", &data);
+        changed = true;
+    }
+
+    if let Some(ref var) = args.remove {
+        fv.remove_var(&var, &efi::EFI_GLOBAL_VARIABLE_GUID.to_string());
         changed = true;
     }
 
