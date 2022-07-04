@@ -260,7 +260,14 @@ impl Default for AuthVariable {
 impl Volume {
 
     pub fn boot_entries(&self) -> BootEntryIter {
-        BootEntryIter { volume: self, slot: None }
+        // XXX - just store the iterator in the struct?
+        let mut vars: Vec<&AuthVariable> = self.vars.iter().filter(|&v|
+                v.name.starts_with("Boot0") &&
+                v.state == VAR_ADDED &&
+                v.guid.to_string() == EFI_GLOBAL_VARIABLE_GUID.to_string())
+                .collect();
+        vars.reverse();
+        BootEntryIter { vars }
     }
 
     pub fn defrag(&mut self) {
@@ -588,29 +595,19 @@ pub enum DeviceType {
 pub const LOAD_OPTION_HIDDEN: u32 = 0x8;
 
 pub struct BootEntryIter<'v> {
-    slot: Option<u16>,
-    volume: &'v Volume,
+    vars: Vec<&'v AuthVariable>,
 }
 
 impl Iterator for BootEntryIter<'_> {
     type Item = BootEntry;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let next: u16 = match self.slot {
-            None            => 0,
-            Some(u16::MAX)  => return None,
-            Some(x)         => x + 1,
-        };
-        self.slot = Some(next);
-        let var = format!("Boot{:04X}", next);
-        if let Some(entry) =
-            self.volume.find_var(&var, &EFI_GLOBAL_VARIABLE_GUID.to_string())
-        {
+        if let Some(entry) = self.vars.pop() {
             let mut c = Cursor::new(&entry.data);
             let mut elo: Self::Item = c.read_le().unwrap();
 
-            elo.slot = next;
-            elo.name = var;
+            elo.name = entry.name.clone();
+            elo.slot = u16::from_str_radix(&elo.name[5..], 16).unwrap_or(0);
             elo.title = String::from_utf16_lossy(elo.rawtitle.as_slice());
 
             for p in &elo.pathlist {
@@ -641,7 +638,6 @@ impl Iterator for BootEntryIter<'_> {
 
             Some(elo)
         } else {
-            self.slot = Some(u16::MAX); // fuse
             None
         }
     }
