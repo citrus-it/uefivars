@@ -258,14 +258,18 @@ impl Default for AuthVariable {
 }
 
 impl Volume {
-
     pub fn boot_entries(&self) -> BootEntryIter {
         // XXX - just store the iterator in the struct?
-        let mut vars: Vec<&AuthVariable> = self.vars.iter().filter(|&v|
-                v.name.starts_with("Boot0") &&
-                v.state == VAR_ADDED &&
-                v.guid.to_string() == EFI_GLOBAL_VARIABLE_GUID.to_string())
-                .collect();
+        let mut vars: Vec<&AuthVariable> = self
+            .vars
+            .iter()
+            .filter(|&v| {
+                v.name.starts_with("Boot0")
+                    && v.state == VAR_ADDED
+                    && v.guid.to_string()
+                        == EFI_GLOBAL_VARIABLE_GUID.to_string()
+            })
+            .collect();
         vars.reverse();
         BootEntryIter { vars }
     }
@@ -289,9 +293,7 @@ impl Volume {
         self.vars.retain(|v| {
             v.state == VAR_ADDED
                 || (v.state == (VAR_ADDED & VAR_IN_DELETED_TRANSITION)
-                    && !known.contains(
-                        &format!("{}/{}", v.guid, v.name),
-                    ))
+                    && !known.contains(&format!("{}/{}", v.guid, v.name)))
         });
 
         // Now promote any remaining ADDED/IN_DELETED_TRANSITION entries
@@ -551,12 +553,9 @@ impl fmt::Debug for BootEntryType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}",
             match self {
-                BootEntryType::PCI(f, d) =>
-                    format!("PCI {}.{}", d, f),
-                BootEntryType::App(ref guid) =>
-                    format!("App {}", guid),
-                BootEntryType::Path(ref path) =>
-                    format!("Path {}", path),
+                BootEntryType::PCI(f, d) => format!("PCI {}.{}", d, f),
+                BootEntryType::App(ref guid) => format!("App {}", guid),
+                BootEntryType::Path(ref path) => format!("Path {}", path),
                 BootEntryType::Unknown => "unknown".to_string(),
             }
         )

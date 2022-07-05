@@ -13,8 +13,6 @@ extern crate serde_json;
 #[macro_use]
 extern crate lazy_static;
 
-
-
 mod efi;
 
 #[derive(Parser, Debug)]
@@ -134,7 +132,7 @@ fn main() {
     }
 
     if let Some(ref var) = args.remove {
-        fv.remove_var(&var, &efi::EFI_GLOBAL_VARIABLE_GUID.to_string());
+        fv.remove_var(var, &efi::EFI_GLOBAL_VARIABLE_GUID.to_string());
         changed = true;
     }
 
@@ -175,12 +173,9 @@ struct BootOptions {
 }
 
 fn list_boot_options(args: &Args, fv: &efi::Volume) {
-
-    let beiter = fv.boot_entries().filter(|v| {
-        match args.filter {
-            Some(ref filter) => v.name.contains(filter),
-            _ => true
-        }
+    let beiter = fv.boot_entries().filter(|v| match args.filter {
+        Some(ref filter) => v.name.contains(filter),
+        _ => true,
     });
 
     let opts = BootOptions {
