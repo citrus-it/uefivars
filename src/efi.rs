@@ -259,7 +259,6 @@ impl Default for AuthVariable {
 
 impl Volume {
     pub fn boot_entries(&self) -> BootEntryIter {
-        // XXX - just store the iterator in the struct?
         let mut vars: Vec<&AuthVariable> = self
             .vars
             .iter()
@@ -270,7 +269,7 @@ impl Volume {
                         == EFI_GLOBAL_VARIABLE_GUID.to_string()
             })
             .collect();
-        vars.reverse();
+        vars.sort_by(|a, b| b.name.partial_cmp(&a.name).unwrap());
         BootEntryIter { vars }
     }
 
