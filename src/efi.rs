@@ -71,6 +71,7 @@ const VAR_DELETED_TRANSITION: u8    =
 #[binrw]
 #[allow(dead_code)]
 #[derive(Debug)]
+#[rustfmt::skip]
 pub struct Volume {
     #[br(assert(zero_vector == 0))]
     zero_vector:        u128,
@@ -119,6 +120,7 @@ pub struct Volume {
 #[binrw]
 #[allow(dead_code)]
 #[derive(Debug)]
+#[rustfmt::skip]
 pub struct VariableStoreHeader {
     // uefi-edk2 ships an authenticated variable store
     #[br(assert(guid == EFI_AUTHENTICATED_VARIABLE_GUID,
@@ -136,6 +138,7 @@ pub struct VariableStoreHeader {
 #[binrw]
 #[allow(dead_code)]
 #[derive(Debug)]
+#[rustfmt::skip]
 pub struct FTWBlockHeader {
     #[br(assert(guid == EFI_FAULT_TOLERANT_WORKING_BLOCK_HEADER,
         "Unexpected FTW header GUID, got {:#x?}", guid))]
@@ -148,6 +151,7 @@ pub struct FTWBlockHeader {
 #[binrw]
 #[allow(dead_code)]
 #[derive(Serialize, Debug)]
+#[rustfmt::skip]
 pub struct AuthVariable {
     pub startid:        u16,
     pub state:          u8,
@@ -216,6 +220,7 @@ impl fmt::Display for AuthVariable {
 
         let statestr = format!("{:02x}?", self.state);
 
+        #[rustfmt::skip]
         let state = match self.state {
             VAR_ADDED                       => "   ",
             VAR_ADDED_TRANSITION            => "ADT",
@@ -450,6 +455,7 @@ mod tests {
 #[binrw]
 #[allow(dead_code)]
 #[derive(Debug, Default)]
+#[rustfmt::skip]
 pub struct EfiTime {
     year:       u16,
     month:      u8,
@@ -505,6 +511,7 @@ pub struct BootOrder {
 #[binread]
 #[allow(dead_code)]
 #[derive(Debug, Serialize)]
+#[rustfmt::skip]
 pub struct BootEntry {
     #[br(ignore)]
     pub slot:           u16,
@@ -565,6 +572,7 @@ impl fmt::Debug for BootEntryType {
 #[binread]
 #[allow(dead_code)]
 #[derive(Debug, Serialize)]
+#[rustfmt::skip]
 pub struct DevicePath {
     // header
     pub device_type:    u8,
@@ -575,6 +583,7 @@ pub struct DevicePath {
 }
 
 #[binread]
+#[rustfmt::skip]
 pub struct RawUTF16 {
     #[br(parse_with = until_exclusive(|v| *v == 0))]
     pub raw:        Vec<u16>,
@@ -614,8 +623,8 @@ impl Iterator for BootEntryIter<'_> {
                     elo.btype = BootEntryType::PCI(p.data[0], p.data[1]);
                 }
                 // 10.3.5.6 PIWG Firmware File
-                if p.device_type == 4 && p.sub_type == 6 &&
-                    p.data.len() == 16 {
+                if p.device_type == 4 && p.sub_type == 6
+                    && p.data.len() == 16 {
 
                     let mut pc = Cursor::new(&p.data);
                     let guid: EfiGuid = pc.read_le().unwrap();
